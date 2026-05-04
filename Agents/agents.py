@@ -71,8 +71,33 @@ print(get_news.invoke("bangalore"))
 
 llm = ChatMistralAI(model="mistral-small-2506")
 
+@wrap_tool_call
+def human_approval(request, handler):
+    """Ask for human approval before every tool call."""
 
+    tool_name = request.tool_call.get("name", "unknown_tool")
+    tool_args = request.tool_call.get("args", {})
 
+    print("\n⚠️ TOOL CALL REQUEST")
+    print(f"Tool: {tool_name}")
+    print(f"Arguments: {tool_args}")
+
+    while True:
+        confirm = input("Approve this tool call? (yes/no): ").strip().lower()
+
+        if confirm == "yes":
+            print(" Approved\n")
+            return handler(request)
+
+        elif confirm == "no":
+            print("Denied\n")
+            return ToolMessage(
+                content=f"Tool call '{tool_name}' was denied by the user.",
+                tool_call_id=request.tool_call["id"]
+            )
+
+        else:
+            print("Please type 'yes' or 'no'.")
 
 
 
